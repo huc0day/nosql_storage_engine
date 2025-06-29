@@ -54,7 +54,7 @@ along with this program.    If not, see <https://www.gnu.org/licenses/>.
 #define DATA_COL_VALUE_TYPE_STRING 2
 #define DATA_COL_VALUE_TYPE_BIN    3
 //
-#include "aes_rsa_hybrid.h"
+#include "hybrid.h"
 #include "unique_manager.h"
 #include "index_manager.h"
 #include "lock_manager.h"
