@@ -74,7 +74,7 @@ unique_manager.h
 
     ‌核心功能接口‌：
 
-    init_unique_manager：初始化空索引树3
+    init_unique_manager：初始化空索引树
     insert_unique_key：插入键值对(时间复杂度O(L)，L为键长)
     search_unique_key：精确查找键对应的行ID
     delete_unique_key：惰性删除节点(标记而非立即释放)
