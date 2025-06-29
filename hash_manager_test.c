@@ -1,4 +1,4 @@
-#include "hash_manager.h"
+#include "libs/hash_manager.h"
 
 // 测试哈希函数
 void test_hash_unique_function ( ) {
