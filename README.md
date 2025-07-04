@@ -26,205 +26,205 @@ C language project (NOSQL storage engine)
 
 1. 哈希表模块（hash_manager）
 
-设计目标：高效键值存储，支持两种冲突解决策略
+   设计目标：高效键值存储，支持两种冲突解决策略
 
-两种实现：
+   两种实现：
 
-UniqueEntry表（开放寻址法）
+   UniqueEntry表（开放寻址法）
 
-键类型： char* （字符串）
+   键类型： char* （字符串）
 
-值类型： int 
+   值类型： int 
 
-冲突解决：线性探测（开放寻址法）
+   冲突解决：线性探测（开放寻址法）
 
-删除策略：惰性删除（标记 is_deleted 位）
+   删除策略：惰性删除（标记 is_deleted 位）
 
-哈希函数：DJB2算法（初始值5381，乘数33）
+   哈希函数：DJB2算法（初始值5381，乘数33）
 
-表大小：1048577（2^20 +1，质数优化冲突）
+   表大小：1048577（2^20 +1，质数优化冲突）
 
-IndexEntry表（链地址法）
+   IndexEntry表（链地址法）
 
-键类型： uint64_t （整数）
+   键类型： uint64_t （整数）
 
-值类型： void* （泛型数据）
+   值类型： void* （泛型数据）
 
-冲突解决：链表存储冲突元素（头插法）
+   冲突解决：链表存储冲突元素（头插法）
 
-内存管理： strdup 分配键内存，避免内存泄漏
+   内存管理： strdup 分配键内存，避免内存泄漏
 
-接口功能：
+   接口功能：
 
- insert()  /  query()  /  delete() （通用CRUD）
+    insert()  /  query()  /  delete() （通用CRUD）
 
-支持错误码（如 KEY_NOT_FOUND ）
+   支持错误码（如 KEY_NOT_FOUND ）
 
-技术亮点：
+   技术亮点：
 
-大质数表大小降低哈希冲突概率
+   大质数表大小降低哈希冲突概率
 
-字符串内存安全（ strdup +手动释放）
+   字符串内存安全（ strdup +手动释放）
 
-惰性删除优化写入性能
+   惰性删除优化写入性能
 
  
 
 2. 唯一键管理模块（unique_manager）
 
-数据结构：Trie树（前缀树）
+   数据结构：Trie树（前缀树）
 
-节点设计：
+   节点设计：
 
- unique_key_node ：37个子节点（a-z0-9+_字符集）
+   unique_key_node ：37个子节点（a-z0-9+_字符集）
 
- row_id 存储行标识
+   row_id 存储行标识
 
- level 记录节点深度
+   level 记录节点深度
 
-核心功能：
+   核心功能：
 
- insert_unique_key() ：O(L)时间插入键值对
+   insert_unique_key() ：O(L)时间插入键值对
 
- search_unique_key() ：精确查找行ID
+   search_unique_key() ：精确查找行ID
 
- delete_unique_key() ：惰性删除（标记清除）
+   delete_unique_key() ：惰性删除（标记清除）
 
- free_unique_manager() ：递归释放树内存
+   free_unique_manager() ：递归释放树内存
 
-应用场景：
+   应用场景：
 
-代理服务器路由表（前缀匹配）
+   代理服务器路由表（前缀匹配）
 
-关键词过滤系统
+   关键词过滤系统
 
-优势：
+   优势：
 
-天然支持前缀搜索
+   天然支持前缀搜索
 
-无哈希冲突
+   无哈希冲突
 
-键有序存储
+   键有序存储
 
  
 
 3. 多级索引模块（index_manager）
 
-数据结构：两级树结构
+   数据结构：两级树结构
 
-第一级：37叉树（a-z0-9+_字符集）
+   第一级：37叉树（a-z0-9+_字符集）
 
-第二级：10叉树（0-9数字）
+   第二级：10叉树（0-9数字）
 
-核心功能：
+   核心功能：
 
- insert_unique_index_key() ：构建复合索引
+   insert_unique_index_key() ：构建复合索引
 
- get_row_ids_paginated() ：分页查询行ID
+   get_row_ids_paginated() ：分页查询行ID
 
- traverse_keys_helper() ：递归遍历所有键
+   traverse_keys_helper() ：递归遍历所有键
 
- callback 机制处理查询结果
+   callback 机制处理查询结果
 
-技术特性：
+   技术特性：
 
-行ID级联操作（插入/删除）
+   行ID级联操作（插入/删除）
 
-动态内存管理（避免内存泄漏）
+   动态内存管理（避免内存泄漏）
 
-多级指针操作保障树结构完整性
+   多级指针操作保障树结构完整性
 
-适用场景：
+   适用场景：
 
-高效范围查询
+   高效范围查询
 
-分布式数据库路由
+   分布式数据库路由
 
  
 
 4. 并发控制模块（lock_manager）
 
-设计目标：细粒度行级锁管理
+   设计目标：细粒度行级锁管理
 
-数据结构：
+   数据结构：
 
- row_lock_t ：互斥锁+条件变量+引用计数
+   row_lock_t ：互斥锁+条件变量+引用计数
 
- lock_bucket_t ：哈希桶（开放寻址法解决冲突）
+   lock_bucket_t ：哈希桶（开放寻址法解决冲突）
 
- pthread_rwlock_t ：外层读写锁优化并发
+   pthread_rwlock_t ：外层读写锁优化并发
 
-关键机制：
+   关键机制：
 
-锁重入：通过 refcount 支持同一线程多次加锁
+   锁重入：通过 refcount 支持同一线程多次加锁
 
-锁升级：阻塞等待与信号量唤醒
+   锁升级：阻塞等待与信号量唤醒
 
-安全边界： REFCOUNT_MAX 防止计数溢出
+   安全边界： REFCOUNT_MAX 防止计数溢出
 
-应用场景：
+   应用场景：
 
-高并发事务处理
+   高并发事务处理
 
-实时数据更新场景
+   实时数据更新场景
 
  
 
 5. 线程安全链表（linked_list）
 
-数据结构：双向链表+父子指针
+   数据结构：双向链表+父子指针
 
-线程安全：
+   线程安全：
 
-三个静态互斥锁（ linked_id_mutex / pages_id_mutex / operate_mutex ）
+   三个静态互斥锁（ linked_id_mutex / pages_id_mutex / operate_mutex ）
 
-原子ID生成函数（ generate_threadsafe_*_id ）
+   原子ID生成函数（ generate_threadsafe_*_id ）
 
-功能特性：
+   功能特性：
 
-正序/倒序查找（分页支持）
+   正序/倒序查找（分页支持）
 
-子链表实现树形结构
+   子链表实现树形结构
 
-动态内存管理（ LINKED_LIST_PAGE_SIZE 控制粒度）
+   动态内存管理（ LINKED_LIST_PAGE_SIZE 控制粒度）
 
-适用场景：
+   适用场景：
 
-内存数据库索引
+   内存数据库索引
 
-任务调度队列
+   任务调度队列
 
  
 
 6. 数据库管理系统（db_struct_data）
 
-架构设计：四级分层模型
+   架构设计：四级分层模型
 
-数据管理器 → 服务器 → 数据库 → 数据表
+   数据管理器 → 服务器 → 数据库 → 数据表
 
-核心组件：
+   核心组件：
 
-数据行：双向链表存储，支持三种数据类型（数值/字符串/二进制）
+   数据行：双向链表存储，支持三种数据类型（数值/字符串/二进制）
 
-二叉树索引：优化数据范围查询
+   二叉树索引：优化数据范围查询
 
-根节点动态扩容（两倍增长策略）
+   根节点动态扩容（两倍增长策略）
 
-行ID范围存储（ _start / _end ）
+   行ID范围存储（ _start / _end ）
 
-并发控制：集成 lock_manager 实现行级锁
+   并发控制：集成 lock_manager 实现行级锁
 
-技术特性：
+   技术特性：
 
-跨平台内存对齐（ ALIGNED_ALLOC 宏）
+   跨平台内存对齐（ ALIGNED_ALLOC 宏）
 
-加密模块集成（ hybrid.h ）
+   加密模块集成（ hybrid.h ）
 
-字段名长度限制（ DATA_COL_NAME_MAX_LEN ）
+   字段名长度限制（ DATA_COL_NAME_MAX_LEN ）
 
-局限性：
+   局限性：
 
-二叉树深度过大可能导致递归性能下降（建议最大深度≤20）
+   二叉树深度过大可能导致递归性能下降（建议最大深度≤20）
 
  
 
