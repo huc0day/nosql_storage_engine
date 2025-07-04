@@ -56,7 +56,7 @@ C language project (NOSQL storage engine)
 
    接口功能：
 
-    insert()  /  query()  /  delete() （通用CRUD）
+   insert()  /  query()  /  delete() （通用CRUD）
 
    支持错误码（如 KEY_NOT_FOUND ）
 
